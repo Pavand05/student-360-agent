@@ -45,6 +45,27 @@ def get_all_students():
     return firestore_service.get_students()
 
 
+@app.post("/api/students")
+def create_and_analyze_student(student_data: Student):
+    """
+    Creates a new student record, runs the Google ADK Risk Agent pipeline,
+    and saves both the student metrics and AI risk assessment to Firestore.
+    """
+    student_dict = student_data.model_dump(by_alias=True)
+    firestore_service.save_student(student_dict)
+
+    # Run ADK agent
+    assessment = agent.analyze_student(student_data)
+    assessment_dict = assessment.model_dump(by_alias=True)
+    firestore_service.save_risk_assessment(assessment_dict)
+
+    return {
+        "status": "success",
+        "student": student_dict,
+        "assessment": assessment_dict
+    }
+
+
 @app.get("/api/risk-assessments")
 def get_all_risk_assessments():
     return firestore_service.get_risk_assessments()

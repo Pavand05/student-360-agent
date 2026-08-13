@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { collection, onSnapshot, doc, addDoc, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, addDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { 
-  Users, AlertTriangle, CheckCircle, Search, Filter, 
-  MessageSquare, Calendar, Award, ArrowUpRight, TrendingDown, BookOpen
+  AlertTriangle, MessageSquare, Calendar, Plus, X, UserPlus
 } from "lucide-react";
 
 export default function App() {
@@ -11,6 +10,7 @@ export default function App() {
   const [assessments, setAssessments] = useState({});
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [conversations, setConversations] = useState([]);
+  const [showAddModal, setShowAddModal] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [classFilter, setClassFilter] = useState("ALL");
@@ -20,6 +20,16 @@ export default function App() {
   const [agreement, setAgreement] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form State for Adding New Student
+  const [newId, setNewId] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newClass, setNewClass] = useState("8-B");
+  const [newAttendance, setNewAttendance] = useState("75");
+  const [newSubmission, setNewSubmission] = useState("80");
+  const [mathsMarks, setMathsMarks] = useState("82, 65, 48");
+  const [scienceMarks, setScienceMarks] = useState("75, 72, 70");
+  const [isCreatingStudent, setIsCreatingStudent] = useState(false);
 
   // 1. Real-time Firestore Listener for Students
   useEffect(() => {
@@ -62,7 +72,6 @@ export default function App() {
         id: doc.id,
         ...doc.data(),
       }));
-      // Sort by timestamp descending
       convList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       setConversations(convList);
     });
@@ -118,15 +127,59 @@ export default function App() {
         loggedBy: "Principal"
       });
 
-      // Clear Form
       setDiscussion("");
       setAgreement("");
       setFollowUpDate("");
     } catch (err) {
       console.error("Error saving parent conversation:", err);
-      alert("Failed to save conversation. Check emulator or database connection.");
+      alert("Failed to save conversation. Check emulator connection.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle Adding New Student via Backend Agent API
+  const handleCreateStudent = async (e) => {
+    e.preventDefault();
+    if (!newId || !newName) return;
+
+    setIsCreatingStudent(true);
+
+    const parseScores = (str) => str.split(",").map((s) => parseFloat(s.trim()) || 0);
+
+    const studentPayload = {
+      studentId: newId.trim(),
+      name: newName.trim(),
+      class: newClass,
+      attendance: parseFloat(newAttendance) || 0,
+      assignmentSubmission: parseFloat(newSubmission) || 0,
+      subjects: {
+        Maths: parseScores(mathsMarks),
+        Science: parseScores(scienceMarks),
+      }
+    };
+
+    try {
+      const res = await fetch("http://localhost:8000/api/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(studentPayload),
+      });
+
+      if (!res.ok) throw new Error("Failed to post student to backend");
+      
+      const data = await res.json();
+      console.log("[Create Student Success]", data);
+
+      // Reset Form & Close Modal
+      setNewId("");
+      setNewName("");
+      setShowAddModal(false);
+    } catch (err) {
+      console.error("Error adding student:", err);
+      alert("Make sure backend FastAPI server (python -m backend.main) is running on port 8000!");
+    } finally {
+      setIsCreatingStudent(false);
     }
   };
 
@@ -141,9 +194,18 @@ export default function App() {
             <p className="app-subtitle">Principal Executive Dashboard & AI Risk Analysis</p>
           </div>
         </div>
-        <div className="live-badge">
-          <div className="pulse-dot"></div>
-          Firestore Real-Time Sync Active
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <button 
+            className="btn-primary" 
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            onClick={() => setShowAddModal(true)}
+          >
+            <UserPlus size={16} /> Add New Student
+          </button>
+          <div className="live-badge">
+            <div className="pulse-dot"></div>
+            Firestore Sync Active
+          </div>
         </div>
       </header>
 
@@ -167,15 +229,13 @@ export default function App() {
       <section className="section-card">
         <div className="table-controls">
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-            <div style={{ position: "relative" }}>
-              <input
-                type="text"
-                placeholder="Search by student name or ID..."
-                className="search-input"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="Search by student name or ID..."
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <select
               className="select-filter"
               value={classFilter}
@@ -247,7 +307,7 @@ export default function App() {
               {filteredStudents.length === 0 && (
                 <tr>
                   <td colSpan="7" style={{ textAlign: "center", padding: "32px", color: "var(--text-muted)" }}>
-                    No students match your filter criteria.
+                    No students match your filter criteria. Select "All Classes" or clear search.
                   </td>
                 </tr>
               )}
@@ -256,11 +316,68 @@ export default function App() {
         </div>
       </section>
 
+      {/* Add Student Modal */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-content" style={{ maxWidth: "550px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 style={{ fontSize: "20px", fontWeight: "700" }}>Add New Student & Run Risk Agent</h2>
+              <button className="close-btn" onClick={() => setShowAddModal(false)}>&times;</button>
+            </div>
+
+            <form onSubmit={handleCreateStudent}>
+              <div className="grid-two-col" style={{ gap: "12px" }}>
+                <div className="form-group">
+                  <label className="form-label">Student ID</label>
+                  <input className="form-input" placeholder="e.g. S006" value={newId} onChange={(e) => setNewId(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Student Name</label>
+                  <input className="form-input" placeholder="e.g. Rohan Mehta" value={newName} onChange={(e) => setNewName(e.target.value)} required />
+                </div>
+              </div>
+
+              <div className="grid-two-col" style={{ gap: "12px" }}>
+                <div className="form-group">
+                  <label className="form-label">Class</label>
+                  <select className="form-input" value={newClass} onChange={(e) => setNewClass(e.target.value)}>
+                    <option value="8-A">Class 8-A</option>
+                    <option value="8-B">Class 8-B</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Attendance %</label>
+                  <input className="form-input" type="number" value={newAttendance} onChange={(e) => setNewAttendance(e.target.value)} required />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Assignment Submission Rate %</label>
+                <input className="form-input" type="number" value={newSubmission} onChange={(e) => setNewSubmission(e.target.value)} required />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Maths Exam Marks (3 Exams, comma-separated)</label>
+                <input className="form-input" placeholder="85, 68, 50" value={mathsMarks} onChange={(e) => setMathsMarks(e.target.value)} required />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Science Exam Marks (3 Exams, comma-separated)</label>
+                <input className="form-input" placeholder="78, 74, 72" value={scienceMarks} onChange={(e) => setScienceMarks(e.target.value)} required />
+              </div>
+
+              <button type="submit" className="btn-primary" style={{ width: "100%", marginTop: "12px" }} disabled={isCreatingStudent}>
+                {isCreatingStudent ? "Running Google ADK Agent..." : "Save & Analyze Student 360"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Student 360 Drilldown Modal */}
       {selectedStudent && (
         <div className="modal-overlay" onClick={() => setSelectedStudentId(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
             <div className="modal-header">
               <div>
                 <h2 style={{ fontSize: "22px", fontWeight: "700" }}>{selectedStudent.name} (360° View)</h2>
@@ -276,7 +393,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* AI Summary & Action Banner */}
+            {/* AI Summary Banner */}
             <div className="card-box" style={{ background: "rgba(30, 41, 59, 0.9)", borderLeft: "4px solid #38bdf8" }}>
               <div className="card-title">
                 <AlertTriangle size={18} color="#38bdf8" /> AI Student Risk Assessment (Gemini 2.5)
@@ -294,7 +411,6 @@ export default function App() {
 
             {/* Metrics & Subject Trends Grid */}
             <div className="grid-two-col">
-              {/* Attendance & Submission Card */}
               <div className="card-box">
                 <div className="card-title">Disciplines & Attendance</div>
                 <div style={{ marginBottom: "16px" }}>
@@ -330,7 +446,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Subject Exam Score History */}
               <div className="card-box">
                 <div className="card-title">Subject Exam Trends (Last 3 Exams)</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -360,7 +475,6 @@ export default function App() {
 
             {/* Parent Conversation Log & Audit Trail */}
             <div className="grid-two-col">
-              {/* Form */}
               <div className="card-box">
                 <div className="card-title"><MessageSquare size={16} /> Log Parent Conversation</div>
                 <form onSubmit={handleSaveConversation}>
@@ -378,7 +492,7 @@ export default function App() {
                     <label className="form-label">What was agreed?</label>
                     <textarea
                       className="form-textarea"
-                      placeholder="e.g. Parent agreed to enrol in weekend tutoring and check daily homework..."
+                      placeholder="e.g. Parent agreed to enrol in weekend tutoring..."
                       value={agreement}
                       onChange={(e) => setAgreement(e.target.value)}
                       required
@@ -400,7 +514,6 @@ export default function App() {
                 </form>
               </div>
 
-              {/* Timestamped Audit Trail List */}
               <div className="card-box">
                 <div className="card-title"><Calendar size={16} /> Audit Trail (Conversation History)</div>
                 <div style={{ maxHeight: "300px", overflowY: "auto" }}>
