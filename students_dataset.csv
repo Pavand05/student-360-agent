@@ -1,0 +1,12 @@
+studentId,name,class,attendance,assignmentSubmission,Maths_Exam1,Maths_Exam2,Maths_Exam3,Science_Exam1,Science_Exam2,Science_Exam3,English_Exam1,English_Exam2,English_Exam3
+S001,Rahul Sharma,8-B,78.0,85.0,82,68,51,75,73,71,80,78,76
+S002,Ananya Verma,8-B,96.0,95.0,88,91,94,90,92,95,85,87,89
+S003,Vikram Patel,8-A,82.0,90.0,85,84,86,88,87,89,82,80,83
+S007,Aditya Roy,9-A,72.0,75.0,79,62,46,80,78,75,76,74,72
+S008,Meera Joshi,9-A,94.0,96.0,92,95,97,89,93,96,91,94,95
+S009,Tanvi Deshmukh,9-B,83.0,89.0,81,76,70,82,80,78,85,84,83
+S010,Yash Vardhan,9-B,66.0,68.0,70,58,42,68,56,49,72,65,58
+S011,Kavya Menon,10-A,98.0,97.0,95,97,99,96,98,100,94,95,96
+S012,Rohan Kulkarni,10-A,76.0,82.0,84,69,52,82,80,78,80,78,76
+S013,Sneha Reddy,10-B,84.0,90.0,82,78,72,85,83,81,86,85,84
+S014,Arjun Kapoor,10-B,62.0,60.0,75,58,40,72,55,44,70,62,52

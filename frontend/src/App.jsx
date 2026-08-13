@@ -242,8 +242,9 @@ export default function App() {
               onChange={(e) => setClassFilter(e.target.value)}
             >
               <option value="ALL">All Classes</option>
-              <option value="8-A">Class 8-A</option>
-              <option value="8-B">Class 8-B</option>
+              {Array.from(new Set(students.map((s) => s.class))).sort().map((cls) => (
+                <option key={cls} value={cls}>Class {cls}</option>
+              ))}
             </select>
           </div>
           <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
