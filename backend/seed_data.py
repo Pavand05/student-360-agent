@@ -33,7 +33,7 @@ SAMPLE_STUDENTS = [
         studentId="S003",
         name="Vikram Patel",
         class_name="8-A",
-        attendance=68.0,
+        attendance=82.0,  # 82% attendance -> MEDIUM risk watchlist
         assignmentSubmission=90.0,
         subjects={
             "Maths": [85.0, 84.0, 86.0],
@@ -63,6 +63,17 @@ SAMPLE_STUDENTS = [
             "Maths": [70.0, 58.0, 45.0],
             "Science": [68.0, 55.0, 48.0],
             "English": [72.0, 68.0, 60.0]
+        }
+    ),
+    Student(
+        studentId="S006",
+        name="Siddharth Rao",
+        class_name="8-A",
+        attendance=83.0,  # 83% attendance -> MEDIUM risk watchlist
+        assignmentSubmission=91.0,
+        subjects={
+            "Maths": [80.0, 74.0, 68.0],  # Mild decline
+            "Science": [78.0, 76.0, 75.0]
         }
     )
 ]
