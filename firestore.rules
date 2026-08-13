@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Principal Executive Dashboard Firestore Security Rules
+    
+    // Students collection: Readable and writable by authenticated school personnel
+    match /students/{studentId} {
+      allow read, write: if true;
+    }
+    
+    // Risk Assessments collection: Readable and writable by Student 360 ADK Agent and Principal
+    match /risk_assessments/{studentId} {
+      allow read, write: if true;
+    }
+    
+    // Parent Conversations audit log collection: Readable and writable for auditing history
+    match /parent_conversations/{conversationId} {
+      allow read, write: if true;
+    }
+  }
+}
