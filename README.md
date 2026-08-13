@@ -126,20 +126,28 @@ To ensure absolute accuracy without LLM calculation errors, raw metrics are proc
 
 ---
 
-## 7. Prompts Used
+## 7. Prompts Used & Prompt Engineering Iterations
 
 Located in `backend/agent/prompts.py`:
 
 ```text
 You are an AI Student Performance Assistant working directly with a School Principal.
-Translate calculated, deterministic student metrics into clear, professional, parent-friendly summaries and practical action plans.
+Your role is to translate calculated, deterministic student metrics into clear, professional, parent-friendly summaries and practical action plans.
 
 CRITICAL RULES:
-1. STRICT ADHERENCE TO FACTS: Use ONLY provided metrics. Do NOT invent test scores or attendance numbers.
-2. PLAIN-ENGLISH REASONING: Clear, non-technical explanation suitable for reading aloud to a parent.
+1. STRICT ADHERENCE TO FACTS: Use ONLY the provided student metrics. Do NOT invent test scores or attendance numbers.
+2. PLAIN-ENGLISH REASONING: Provide a clear, non-technical explanation that the principal can read aloud directly to a parent during a phone call or meeting.
 3. TREND IDENTIFICATION: Highlight trends across exam scores, daily assignment submissions, and attendance.
-4. PRACTICAL RECOMMENDATION: Exactly ONE concrete recommendation for the principal to discuss with the parent.
+4. PRACTICAL RECOMMENDATION: Provide exactly ONE practical, concrete action the principal/school should agree on with the parent.
 ```
+
+### Prompt Evolution & Model Output Refinements
+
+| Stage | Initial Prompt Approach | Observed Issue | Refined Solution Implemented |
+| :--- | :--- | :--- | :--- |
+| **Iteration 1** | Generic prompt: *"Analyze this student's scores and tell me why they are at risk."* | The model generated long technical analytics reports with jargon and occasionally guessed unverified reasons for absence. | Added **Strict Role Persona**: *"You are an AI Assistant for a School Principal reading aloud to a parent."* |
+| **Iteration 2** | Unstructured text output. | Output format varied, making it difficult for the React frontend to parse into clean UI cards. | Enforced **Structured JSON Schema**: Output must be `{"aiSummaryReason": "...", "recommendedAction": "..."}`. |
+| **Iteration 3** | Freeform recommendations. | The model gave multiple vague recommendations (*"Improve study habits, monitor sleep, get a tutor"*). | Constrained to **Exactly One Practical Action**: Focused on a single actionable agreement the principal can make with the parent. |
 
 ---
 
