@@ -30,6 +30,8 @@ The **Student 360 Performance Tracker Agent**:
 
 ## 3. Architecture & Workflow
 
+![System Architecture Diagram](docs/architecture_diagram.png)
+
 ```text
 Principal
    ↓

@@ -1,6 +1,8 @@
 # Student 360 Performance Tracker Agent - System Architecture
 
-## Architecture Diagram
+![Student 360 Architecture Diagram](architecture_diagram.png)
+
+## System Flow Diagram
 
 ```mermaid
 flowchart TD
